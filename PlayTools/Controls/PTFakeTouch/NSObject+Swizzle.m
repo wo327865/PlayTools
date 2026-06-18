@@ -15,10 +15,66 @@
 #import <AVFoundation/AVFoundation.h>
 #import <CoreMotion/CoreMotion.h>
 #import <GameController/GameController.h>
+#import <mach-o/dyld.h>
 
 __attribute__((visibility("hidden")))
 @interface PTSwizzleLoader : NSObject
 @end
+
+static BOOL PTUnityKeyboardDelegateHookInstalled = NO;
+
+static void PTInstallUnityKeyboardDelegateHookIfNeeded(void) {
+    if (PTUnityKeyboardDelegateHookInstalled) {
+        return;
+    }
+
+    if (![[PlaySettings shared] ignoreUnityKeyboardInitializationError]) {
+        return;
+    }
+
+    Class keyboardDelegate = objc_getClass("KeyboardDelegate");
+    if (!keyboardDelegate) {
+        return;
+    }
+
+    SEL originalSelector = NSSelectorFromString(@"Initialize");
+    SEL hookSelector = @selector(hook_Unity_KeyboardDelegate_Initialize);
+    Method originalMethod = class_getClassMethod(keyboardDelegate, originalSelector);
+    Method hookMethod = class_getClassMethod([NSObject class], hookSelector);
+
+    if (!originalMethod || !hookMethod) {
+        return;
+    }
+
+    Class metaClass = object_getClass((id)keyboardDelegate);
+    BOOL added = class_addMethod(metaClass,
+                                 hookSelector,
+                                 method_getImplementation(hookMethod),
+                                 method_getTypeEncoding(hookMethod));
+    Method installedHookMethod = class_getClassMethod(keyboardDelegate, hookSelector);
+
+    if (!added || !installedHookMethod) {
+        return;
+    }
+
+    method_exchangeImplementations(originalMethod, installedHookMethod);
+    PTUnityKeyboardDelegateHookInstalled = YES;
+    NSLog(@"PlayTools: installed Unity KeyboardDelegate initialization hook");
+}
+
+static void PTTryInstallUnityKeyboardDelegateHookOnMainQueue(void) {
+    if ([NSThread isMainThread]) {
+        PTInstallUnityKeyboardDelegateHookIfNeeded();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            PTInstallUnityKeyboardDelegateHookIfNeeded();
+        });
+    }
+}
+
+static void PTImageAdded(const struct mach_header *mh, intptr_t vmaddr_slide) {
+    PTTryInstallUnityKeyboardDelegateHookOnMainQueue();
+}
 
 @implementation NSObject (Swizzle)
 
@@ -363,12 +419,24 @@ bool menuWasCreated = false;
         [objc_getClass("GCMouse") swizzleClassMethod:@selector(mice) withMethod:@selector(hook_GCMouse_mice)];
     }
 
-    // Delay a frame to wait for some frameworks (such as UnityFramework) to load
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.01 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-        if ([[PlaySettings shared] ignoreUnityKeyboardInitializationError]) {
-            [objc_getClass("KeyboardDelegate") swizzleClassMethod:NSSelectorFromString(@"Initialize") withMethod:@selector(hook_Unity_KeyboardDelegate_Initialize)];
-        }
-    });
+    if ([[PlaySettings shared] ignoreUnityKeyboardInitializationError]) {
+        PTTryInstallUnityKeyboardDelegateHookOnMainQueue();
+        _dyld_register_func_for_add_image(PTImageAdded);
+
+        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidFinishLaunchingNotification
+                                                          object:nil
+                                                           queue:[NSOperationQueue mainQueue]
+                                                      usingBlock:^(__unused NSNotification *notification) {
+            PTInstallUnityKeyboardDelegateHookIfNeeded();
+        }];
+
+        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidBecomeActiveNotification
+                                                          object:nil
+                                                           queue:[NSOperationQueue mainQueue]
+                                                      usingBlock:^(__unused NSNotification *notification) {
+            PTInstallUnityKeyboardDelegateHookIfNeeded();
+        }];
+    }
 }
 
 @end
