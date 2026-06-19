@@ -91,12 +91,13 @@ public class ControlMode: Equatable {
     private func setupKeyboard() {
         AKInterface.shared!.setupKeyboard(
             keyboard: { keycode, pressed, isRepeat, ctrlModified in
-                self.keyboardAdapter.handleKey(
+                let consumed = self.keyboardAdapter.handleKey(
                     keycode: keycode,
                     pressed: pressed,
                     isRepeat: isRepeat,
                     ctrlModified: ctrlModified
                 )
+                return PlaySettings.shared.disableBuiltinKeyboard || consumed
             },
             swapMode: ModeAutomaton.onOption
         )
