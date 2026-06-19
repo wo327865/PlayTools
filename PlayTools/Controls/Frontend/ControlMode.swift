@@ -112,6 +112,10 @@ public class ControlMode: Equatable {
             swapMode: ModeAutomaton.onOption,
             consumeNativeKeyboard: {
                 PlaySettings.shared.disableBuiltinKeyboard
+            },
+            commandK: {
+                ModeAutomaton.onCmdK()
+                return true
             }
         )
     }

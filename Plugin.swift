@@ -26,7 +26,8 @@ public protocol Plugin: NSObjectProtocol {
     func terminateApplication()
     func setupKeyboard(keyboard: @escaping (UInt16, Bool, Bool, Bool) -> Bool,
                        swapMode: @escaping () -> Bool,
-                       consumeNativeKeyboard: @escaping () -> Bool)
+                       consumeNativeKeyboard: @escaping () -> Bool,
+                       commandK: @escaping () -> Bool)
     func setupMouseMoved(_ mouseMoved: @escaping (CGFloat, CGFloat) -> Bool)
     func setupMouseButton(left: Bool, right: Bool, _ consumed: @escaping (Int, Bool) -> Bool)
     func setupScrollWheel(_ onMoved: @escaping (CGFloat, CGFloat) -> Bool)
