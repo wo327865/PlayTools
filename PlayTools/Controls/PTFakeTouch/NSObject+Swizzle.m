@@ -22,46 +22,6 @@ __attribute__((visibility("hidden")))
 @end
 
 static BOOL PTUnityKeyboardDelegateHookInstalled = NO;
-static BOOL PTUnityViewKeyCommandsHookInstalled = NO;
-static BOOL PTUnityKeyboardDelegateInitialized = NO;
-
-static void PTInstallUnityViewKeyCommandsHookIfNeeded(void) {
-    if (PTUnityViewKeyCommandsHookInstalled) {
-        return;
-    }
-
-    if (![[PlaySettings shared] ignoreUnityKeyboardInitializationError]) {
-        return;
-    }
-
-    Class unityView = objc_getClass("UnityView");
-    if (!unityView) {
-        return;
-    }
-
-    SEL originalSelector = NSSelectorFromString(@"keyCommands");
-    SEL hookSelector = @selector(hook_UnityView_keyCommands);
-    Method originalMethod = class_getInstanceMethod(unityView, originalSelector);
-    Method hookMethod = class_getInstanceMethod([NSObject class], hookSelector);
-
-    if (!originalMethod || !hookMethod) {
-        return;
-    }
-
-    BOOL added = class_addMethod(unityView,
-                                 hookSelector,
-                                 method_getImplementation(hookMethod),
-                                 method_getTypeEncoding(hookMethod));
-    Method installedHookMethod = class_getInstanceMethod(unityView, hookSelector);
-
-    if (!added || !installedHookMethod) {
-        return;
-    }
-
-    method_exchangeImplementations(originalMethod, installedHookMethod);
-    PTUnityViewKeyCommandsHookInstalled = YES;
-    NSLog(@"PlayTools: installed UnityView keyCommands hook");
-}
 
 static void PTInstallUnityKeyboardDelegateHookIfNeeded(void) {
     if (PTUnityKeyboardDelegateHookInstalled) {
@@ -104,11 +64,9 @@ static void PTInstallUnityKeyboardDelegateHookIfNeeded(void) {
 
 static void PTTryInstallUnityKeyboardDelegateHookOnMainQueue(void) {
     if ([NSThread isMainThread]) {
-        PTInstallUnityViewKeyCommandsHookIfNeeded();
         PTInstallUnityKeyboardDelegateHookIfNeeded();
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
-            PTInstallUnityViewKeyCommandsHookIfNeeded();
             PTInstallUnityKeyboardDelegateHookIfNeeded();
         });
     }
@@ -302,19 +260,10 @@ static void PTImageAdded(const struct mach_header *mh, intptr_t vmaddr_slide) {
 + (void)hook_Unity_KeyboardDelegate_Initialize {
     @try {
         [self hook_Unity_KeyboardDelegate_Initialize];
-        PTUnityKeyboardDelegateInitialized = YES;
     }
     @catch (NSException *exception) {
         NSLog(@"Caught exception: %@, reason: %@", exception.name, exception.reason);
-        PTUnityKeyboardDelegateInitialized = YES;
     }
-}
-
-- (NSArray *)hook_UnityView_keyCommands {
-    if (!PTUnityKeyboardDelegateInitialized) {
-        return nil;
-    }
-    return [self hook_UnityView_keyCommands];
 }
 
 // Hook for UIUserInterfaceIdiom
@@ -473,10 +422,6 @@ bool menuWasCreated = false;
     if ([[PlaySettings shared] ignoreUnityKeyboardInitializationError]) {
         PTTryInstallUnityKeyboardDelegateHookOnMainQueue();
         _dyld_register_func_for_add_image(PTImageAdded);
-
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            PTUnityKeyboardDelegateInitialized = YES;
-        });
 
         [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidFinishLaunchingNotification
                                                           object:nil
