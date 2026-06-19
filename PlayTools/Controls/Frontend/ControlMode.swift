@@ -109,7 +109,10 @@ public class ControlMode: Equatable {
                 }
                 return PlaySettings.shared.disableBuiltinKeyboard || consumed
             },
-            swapMode: ModeAutomaton.onOption
+            swapMode: ModeAutomaton.onOption,
+            consumeNativeKeyboard: {
+                PlaySettings.shared.disableBuiltinKeyboard
+            }
         )
     }
 

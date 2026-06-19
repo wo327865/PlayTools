@@ -130,9 +130,19 @@ class AKPlugin: NSObject, Plugin {
 
     private var modifierFlag: UInt = 0
 
+    private func logConsumedModifierEvent(_ event: NSEvent, reason: String) {
+        NSLog(
+            "PlayTools: consumed keyboard modifier event keycode=%hu flags=%llu reason=%@",
+            event.keyCode,
+            event.modifierFlags.rawValue,
+            reason
+        )
+    }
+
     // swiftlint:disable:next function_body_length
     func setupKeyboard(keyboard: @escaping (UInt16, Bool, Bool, Bool) -> Bool,
-                       swapMode: @escaping () -> Bool) {
+                       swapMode: @escaping () -> Bool,
+                       consumeNativeKeyboard: @escaping () -> Bool) {
         func checkCmd(modifier: NSEvent.ModifierFlags) -> Bool {
             if modifier.contains(.command) {
                 self.cmdPressed = true
@@ -144,6 +154,10 @@ class AKPlugin: NSObject, Plugin {
         }
         NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { event in
             if checkCmd(modifier: event.modifierFlags) {
+                if consumeNativeKeyboard() {
+                    self.logConsumedModifierEvent(event, reason: "command-keyDown")
+                    return nil
+                }
                 return event
             }
             let consumed = keyboard(event.keyCode, true, event.isARepeat,
@@ -155,6 +169,10 @@ class AKPlugin: NSObject, Plugin {
         })
         NSEvent.addLocalMonitorForEvents(matching: .keyUp, handler: { event in
             if checkCmd(modifier: event.modifierFlags) {
+                if consumeNativeKeyboard() {
+                    self.logConsumedModifierEvent(event, reason: "command-keyUp")
+                    return nil
+                }
                 return event
             }
             let consumed = keyboard(event.keyCode, false, false,
@@ -166,6 +184,10 @@ class AKPlugin: NSObject, Plugin {
         })
         NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: { event in
             if checkCmd(modifier: event.modifierFlags) {
+                if consumeNativeKeyboard() {
+                    self.logConsumedModifierEvent(event, reason: "command-flagsChanged")
+                    return nil
+                }
                 return event
             }
             let pressed = self.modifierFlag < event.modifierFlags.rawValue
@@ -174,6 +196,10 @@ class AKPlugin: NSObject, Plugin {
             let changedFlags = NSEvent.ModifierFlags(rawValue: changed)
             if pressed && changedFlags.contains(.option) {
                 if swapMode() {
+                    return nil
+                }
+                if consumeNativeKeyboard() {
+                    self.logConsumedModifierEvent(event, reason: "option-flagsChanged")
                     return nil
                 }
                 return event
