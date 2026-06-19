@@ -97,16 +97,6 @@ public class ControlMode: Equatable {
                     isRepeat: isRepeat,
                     ctrlModified: ctrlModified
                 )
-                if PlaySettings.shared.disableBuiltinKeyboard {
-                    NSLog(
-                        "PlayTools: consumed keyboard event keycode=%hu pressed=%@ repeat=%@ ctrl=%@ mapped=%@",
-                        keycode,
-                        pressed ? "true" : "false",
-                        isRepeat ? "true" : "false",
-                        ctrlModified ? "true" : "false",
-                        consumed ? "true" : "false"
-                    )
-                }
                 return PlaySettings.shared.disableBuiltinKeyboard || consumed
             },
             swapMode: ModeAutomaton.onOption,

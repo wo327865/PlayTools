@@ -130,15 +130,6 @@ class AKPlugin: NSObject, Plugin {
 
     private var modifierFlag: UInt = 0
 
-    private func logConsumedModifierEvent(_ event: NSEvent, reason: String) {
-        NSLog(
-            "PlayTools: consumed keyboard modifier event keycode=%hu flags=%llu reason=%@",
-            event.keyCode,
-            event.modifierFlags.rawValue,
-            reason
-        )
-    }
-
     // swiftlint:disable:next function_body_length
     func setupKeyboard(keyboard: @escaping (UInt16, Bool, Bool, Bool) -> Bool,
                        swapMode: @escaping () -> Bool,
@@ -157,12 +148,10 @@ class AKPlugin: NSObject, Plugin {
             if event.modifierFlags.contains(.command),
                event.charactersIgnoringModifiers?.lowercased() == "k",
                commandK() {
-                self.logConsumedModifierEvent(event, reason: "command-k")
                 return nil
             }
             if checkCmd(modifier: event.modifierFlags) {
                 if consumeNativeKeyboard() {
-                    self.logConsumedModifierEvent(event, reason: "command-keyDown")
                     return nil
                 }
                 return event
@@ -177,7 +166,6 @@ class AKPlugin: NSObject, Plugin {
         NSEvent.addLocalMonitorForEvents(matching: .keyUp, handler: { event in
             if checkCmd(modifier: event.modifierFlags) {
                 if consumeNativeKeyboard() {
-                    self.logConsumedModifierEvent(event, reason: "command-keyUp")
                     return nil
                 }
                 return event
@@ -192,7 +180,6 @@ class AKPlugin: NSObject, Plugin {
         NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: { event in
             if checkCmd(modifier: event.modifierFlags) {
                 if consumeNativeKeyboard() {
-                    self.logConsumedModifierEvent(event, reason: "command-flagsChanged")
                     return nil
                 }
                 return event
@@ -206,7 +193,6 @@ class AKPlugin: NSObject, Plugin {
                     return nil
                 }
                 if consumeNativeKeyboard() {
-                    self.logConsumedModifierEvent(event, reason: "option-flagsChanged")
                     return nil
                 }
                 return event
