@@ -24,6 +24,10 @@ class PlayInput {
             simulateGCMouseDisconnect()
         }
 
+        if PlaySettings.shared.disableBuiltinKeyboard {
+            simulateGCKeyboardDisconnect()
+        }
+
         if !PlaySettings.shared.keymapping {
             return
         }
@@ -70,6 +74,22 @@ class PlayInput {
                 }
                 mouse.mouseInput?.scroll.valueChangedHandler = nil
                 mouse.mouseInput?.mouseMovedHandler = nil
+            }
+        }
+    }
+
+    private func simulateGCKeyboardDisconnect() {
+        NotificationCenter.default.addObserver(
+            forName: .GCKeyboardDidConnect,
+            object: nil,
+            queue: .main
+        ) { nofitication in
+            guard let keyboard = nofitication.object as? GCKeyboard else {
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(1)) {
+                NotificationCenter.default.post(name: .GCKeyboardDidDisconnect, object: keyboard)
+                keyboard.keyboardInput?.keyChangedHandler = nil
             }
         }
     }

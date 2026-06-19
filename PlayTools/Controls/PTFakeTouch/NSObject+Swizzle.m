@@ -257,6 +257,14 @@ static void PTImageAdded(const struct mach_header *mh, intptr_t vmaddr_slide) {
     return @[];
 }
 
++ (GCKeyboard *)hook_GCKeyboard_coalescedKeyboard {
+    return nil;
+}
+
++ (NSSet *)hook_GCKeyboard_keyboards {
+    return [NSSet set];
+}
+
 + (void)hook_Unity_KeyboardDelegate_Initialize {
     @try {
         [self hook_Unity_KeyboardDelegate_Initialize];
@@ -417,6 +425,20 @@ bool menuWasCreated = false;
     if (([[PlaySettings shared] disableBuiltinMouse])) {
         [objc_getClass("GCMouse") swizzleClassMethod:@selector(current) withMethod:@selector(hook_GCMouse_current)];
         [objc_getClass("GCMouse") swizzleClassMethod:@selector(mice) withMethod:@selector(hook_GCMouse_mice)];
+    }
+
+    if (([[PlaySettings shared] disableBuiltinKeyboard])) {
+        Class gcKeyboard = objc_getClass("GCKeyboard");
+        if (gcKeyboard) {
+            if (class_getClassMethod(gcKeyboard, @selector(coalescedKeyboard))) {
+                [gcKeyboard swizzleClassMethod:@selector(coalescedKeyboard)
+                                    withMethod:@selector(hook_GCKeyboard_coalescedKeyboard)];
+            }
+            if (class_getClassMethod(gcKeyboard, NSSelectorFromString(@"keyboards"))) {
+                [gcKeyboard swizzleClassMethod:NSSelectorFromString(@"keyboards")
+                                    withMethod:@selector(hook_GCKeyboard_keyboards)];
+            }
+        }
     }
 
     if ([[PlaySettings shared] ignoreUnityKeyboardInitializationError]) {

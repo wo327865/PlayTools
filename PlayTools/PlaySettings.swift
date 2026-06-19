@@ -96,6 +96,8 @@ let settings = PlaySettings.shared
 
     @objc lazy var disableBuiltinMouse = settingsData.disableBuiltinMouse
 
+    @objc lazy var disableBuiltinKeyboard = settingsData.disableBuiltinKeyboard
+
     @objc lazy var blockSleepSpamming = settingsData.blockSleepSpamming
 
     @objc lazy var ignoreUnityKeyboardInitializationError = settingsData.ignoreUnityKeyboardInitializationError
@@ -129,6 +131,7 @@ struct AppSettingsData: Codable {
     var checkMicPermissionSync = false
     var limitMotionUpdateFrequency = false
     var disableBuiltinMouse = false
+    var disableBuiltinKeyboard = false
     var resizableAspectRatioType = 0
     var resizableAspectRatioWidth = 0
     var resizableAspectRatioHeight = 0
