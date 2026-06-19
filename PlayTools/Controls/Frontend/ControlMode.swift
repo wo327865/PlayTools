@@ -103,9 +103,20 @@ public class ControlMode: Equatable {
             consumeNativeKeyboard: {
                 PlaySettings.shared.disableBuiltinKeyboard
             },
-            commandK: {
-                ModeAutomaton.onCmdK()
-                return true
+            commandShortcut: { keycode, characters in
+                if characters?.lowercased() == "k" {
+                    ModeAutomaton.onCmdK()
+                    return true
+                }
+                if keycode == 126 {
+                    EditorController.shared.focusedControl?.resize(down: false)
+                    return true
+                }
+                if keycode == 125 {
+                    EditorController.shared.focusedControl?.resize(down: true)
+                    return true
+                }
+                return false
             }
         )
     }

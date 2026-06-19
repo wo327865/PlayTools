@@ -134,7 +134,7 @@ class AKPlugin: NSObject, Plugin {
     func setupKeyboard(keyboard: @escaping (UInt16, Bool, Bool, Bool) -> Bool,
                        swapMode: @escaping () -> Bool,
                        consumeNativeKeyboard: @escaping () -> Bool,
-                       commandK: @escaping () -> Bool) {
+                       commandShortcut: @escaping (UInt16, String?) -> Bool) {
         func checkCmd(modifier: NSEvent.ModifierFlags) -> Bool {
             if modifier.contains(.command) {
                 self.cmdPressed = true
@@ -146,8 +146,7 @@ class AKPlugin: NSObject, Plugin {
         }
         NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { event in
             if event.modifierFlags.contains(.command),
-               event.charactersIgnoringModifiers?.lowercased() == "k",
-               commandK() {
+               commandShortcut(event.keyCode, event.charactersIgnoringModifiers) {
                 return nil
             }
             if checkCmd(modifier: event.modifierFlags) {
