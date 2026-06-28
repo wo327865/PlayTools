@@ -48,6 +48,38 @@ public class ModeAutomaton {
         }
     }
 
+    static public func onNextKeymap() {
+        let isEditing = mode == .editor
+
+        if isEditing {
+            onCmdK()
+        }
+
+        keymap.nextKeymap()
+        Toast.showHint(title: "Switched to next keymap: \(keymap.currentKeymapName)")
+        ActionDispatcher.build()
+
+        if isEditing {
+            onCmdK()
+        }
+    }
+
+    static public func onPreviousKeymap() {
+        let isEditing = mode == .editor
+
+        if isEditing {
+            onCmdK()
+        }
+
+        keymap.previousKeymap()
+        Toast.showHint(title: "Switched to previous keymap: \(keymap.currentKeymapName)")
+        ActionDispatcher.build()
+
+        if isEditing {
+            onCmdK()
+        }
+    }
+
     static public func onUITextInputBeginEdit() {
         if mode == .editor {
             return

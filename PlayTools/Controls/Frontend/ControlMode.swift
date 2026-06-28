@@ -104,8 +104,17 @@ public class ControlMode: Equatable {
                 PlaySettings.shared.disableBuiltinKeyboard
             },
             commandShortcut: { keycode, characters in
-                if characters?.lowercased() == "k" {
+                let commandKey = characters?.lowercased()
+                if commandKey == "k" {
                     ModeAutomaton.onCmdK()
+                    return true
+                }
+                if commandKey == "[" || keycode == 33 {
+                    ModeAutomaton.onPreviousKeymap()
+                    return true
+                }
+                if commandKey == "]" || keycode == 30 {
+                    ModeAutomaton.onNextKeymap()
                     return true
                 }
                 if keycode == 126 {

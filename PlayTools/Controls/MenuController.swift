@@ -82,36 +82,12 @@ extension UIApplication {
 
     @objc
     func nextKeymap(_ sender: AnyObject) {
-        let isCmdK = mode == .editor
-
-        if isCmdK {
-            ModeAutomaton.onCmdK()
-        }
-
-        keymap.nextKeymap()
-        Toast.showHint(title: "Switched to next keymap: \(keymap.currentKeymapName)")
-        ActionDispatcher.build()
-
-        if isCmdK {
-            ModeAutomaton.onCmdK()
-        }
+        ModeAutomaton.onNextKeymap()
     }
 
     @objc
     func previousKeymap(_ sender: AnyObject) {
-        let isCmdK = mode == .editor
-
-        if isCmdK {
-            ModeAutomaton.onCmdK()
-        }
-
-        keymap.previousKeymap()
-        Toast.showHint(title: "Switched to previous keymap: \(keymap.currentKeymapName)")
-        ActionDispatcher.build()
-
-        if isCmdK {
-            ModeAutomaton.onCmdK()
-        }
+        ModeAutomaton.onPreviousKeymap()
     }
 }
 
